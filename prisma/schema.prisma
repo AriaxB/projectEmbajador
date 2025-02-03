@@ -1,0 +1,209 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+  seed="prisma/seed.ts"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Users{
+  id String @id @default(uuid())
+  username String @unique @db.VarChar(50)
+  mail String @unique @db.VarChar(100)
+  age Int
+  password String
+  created_At DateTime @default(now())
+  state Boolean?
+  rol Roles @relation(fields: [rolId],references: [id], onDelete: Cascade)
+  rolId Int
+  news News[]
+  profileImages ProfileImages?
+  likesBlogs LikesBlogs[]
+  likesComments LikesComments[]
+}
+
+model Roles{
+  id Int @id @default(autoincrement())
+  rol_description String
+  users Users[]
+}
+
+model News{
+  id String @id @default(uuid())
+  title String  @db.VarChar(200)
+  descriptioon String @db.VarChar(10000)
+  created_At DateTime @default(now())
+  updated_At DateTime @updatedAt
+  state Boolean?
+  user Users @relation(fields: [userId],references: [id],onDelete: Cascade)
+  userId String
+  newsImages NewsImages?
+}
+
+model Blogs{
+  id String @id @default(uuid())
+  title String @db.VarChar(1000)
+  description String @db.VarChar(6000)
+  state Boolean
+  created_At DateTime @default(now())
+  updated_At DateTime @updatedAt
+  comments Comments[]
+  likesBlogs LikesBlogs[]
+}
+
+model Stadiums{
+  id String @id @default(uuid())
+  name_stadium String
+  image_stadium String
+  country String
+  city String
+  teams Teams[]
+}
+
+model Teams{
+  id String @id @default(uuid())
+  team_name String @db.VarChar(150) @unique
+  shield_image String?
+  country String @db.VarChar(100)
+  city String @db.VarChar(100)
+  foundation_year DateTime
+  nick_name String @db.VarChar(100)
+  stadiums Stadiums @relation(fields: [stadiumId], references: [id],onDelete: Cascade)
+  stadiumId String
+  statisticsTeams StatisticsTeams?
+  players Players[]
+  localMatches Matches[] @relation("LocalTeam")
+  visitorMatches Matches[] @relation("VisitorTeam")
+}
+
+model Players{
+  id String @id @default(uuid())
+  first_name String @db.VarChar(150)
+  last_name String @db.VarChar(150)
+  born_date DateTime
+  teams Teams @relation(fields: [teamId],references: [id],onDelete: Cascade)
+  teamId String
+  statisticsPlayers StatisticsPlayers?
+  playerPictures PlayerPictures?
+  positions Positions @relation(fields: [positionId], references:[id], onDelete: Cascade)
+  positionId String
+}
+
+model StatisticsPlayers{
+  id String @id @default(uuid())
+  played_games Int @db.Integer()
+  starter_games Int @db.Integer()
+  substitute_games Int @db.Integer()
+  goals_scored Int @db.Integer()
+  assists_made Int @db.Integer()
+  red_cards Int @db.Integer()
+  yellow_cards Int @db.Integer()
+  players Players @relation(fields: [playerId],references: [id],onDelete: Cascade)
+  playerId String @unique
+}
+
+model StatisticsTeams{
+  id String @id @default(uuid())
+  win_games Int @db.Integer()
+  defeate_games Int @db.Integer()
+  tied_games Int @db.Integer()
+  favor_goals Int @db.Integer()
+  against_goals Int @db.Integer()
+  played_matches Int @db.Integer()
+  teams Teams @relation(fields: [teamId],references: [id],onDelete: Cascade)
+  teamId String @unique
+}
+
+model Matches{
+  id String @id @default(uuid())
+  local_goals Int @db.Integer()
+  visitor_goals Int @db.Integer()
+  localTeam Teams @relation("LocalTeam", fields: [localTeamId], references: [id],onDelete: Cascade)
+  visitorTeam Teams @relation("VisitorTeam",fields: [visitorTeamId], references: [id],onDelete: Cascade)
+  localTeamId String
+  visitorTeamId String
+  date_match DateTime
+  start_date DateTime
+  finish_date DateTime
+  competitions Competitions @relation(fields: [competitionId],references: [id],onDelete: Cascade)
+  competitionId String
+  stateMatches StateMatches @relation(fields: [stateId],references: [id],onDelete: Cascade)
+  stateId String
+  }
+
+model LikesBlogs{
+  id String @id @default(uuid())
+  blogs Blogs @relation(fields: [blogId], references: [id],onDelete: Cascade)
+  users Users @relation(fields: [userId],references: [id],onDelete: Cascade)
+  userId String 
+  blogId  String
+  created_At DateTime @default(now())
+
+  @@unique([userId,blogId])
+}
+
+model LikesComments{
+  id String @id @default(uuid())
+  comments Comments @relation(fields: [commentId],references: [id],onDelete: Cascade)
+  users Users @relation(fields: [userId],references: [id],onDelete: Cascade)
+  commentId String
+  userId String
+  created_At DateTime @default(now())
+
+  @@unique([userId,commentId])
+}
+
+model Comments{
+  id String @id @default(uuid())
+  description String @db.VarChar(500)
+  state Boolean
+  likesComments LikesComments[]
+  blogs Blogs @relation(fields: [blogId],references: [id],onDelete: Cascade)
+  blogId String
+}
+
+model Positions{
+  id String @id @default(uuid())
+  position_description String @db.VarChar(90)
+  players Players[]
+}
+
+model StateMatches{
+  id String @id @default(uuid())
+  state_description String @db.VarChar(50)
+  matches Matches[]
+}
+
+model ProfileImages{
+  id String @id @default(uuid())
+  link_profile_image String
+  users Users @relation(fields: [userId], references: [id],onDelete: Cascade)
+  userId String @unique
+}
+
+model Competitions{
+  id String @id @default(uuid())
+  competition_name String @db.VarChar(100)
+  matches Matches[]
+}
+
+model NewsImages{
+  id String @id @default(uuid())
+  link_new_image String
+  news News @relation(fields: [newId],references: [id],onDelete: Cascade)
+  newId String @unique
+}
+model PlayerPictures{
+  id String @id @default(uuid())
+  link_player_image String
+  players Players @relation(fields: [playerId],references: [id],onDelete: Cascade)
+  playerId String @unique
+}
